@@ -1,3 +1,12 @@
+There are two parts to this assignment:
+
+part 1 reads in the data file, 
+creates a sorted array of structs and a matching index array, using country code as a key. then both arrays are written to two binary files
+the struct contains a character code, name, population and life expectancy
+
+part 2 reads in the index array form the binary file and allows the user to search for a record by country,
+ if the record is found the records.bin file is opened and prints the wanted recrod directly
+ 
 To compile both part1 and part2 you can just run $make
 
 to compile part1: $make A1part1
@@ -6,8 +15,5 @@ to create part2: $make part2
 
 to remove parts one and two: $make clean
 
-I dont see the need for a seperate make file for part 2 only
-
-user input is done  with read
 
 000 will exit the program
