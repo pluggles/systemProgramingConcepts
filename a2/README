@@ -1,1 +1,4 @@
+This is an implementation of a malloc, calloc and realloc for C
+I mostly followed this tutorial: http://danluu.com/malloc-tutorial/
+
 you can compile with $make
