@@ -1,0 +1,116 @@
+Solid work. About the only thing I couldn't get it to do is redirection in from a file. Redirecting out worked okay (despite your comment saying it didn't?). The kill function is good, but you should have parsed the number out from after the '-' sign and just passed that straight to `kill()` instead of what you are doing. Lastly, the `cd` function should take you to your home directory without any arguments. Definitely clean up some unused code though, especially if you have huge blocks of commented out code ...
+
+GRADE: 80 / 100
+
+
+Script started on Wed 22 Apr 2015 06:26:55 PM EDT
+git@jazz:~/clones/2240/a3/aron.r.lawrence$ ./MyOwnShell
+
+
+
+
+Welcome to PLUSH: Pluggles' Lame  Ugly SHell
+you were not planning on doing any of that new age redirection in right?
+
+
+
+
+>>> ls -la
+total 116
+drwxrwxr-x  3 git git  4096 Apr 22 18:26 .
+drwxrwxr-x 29 git git  4096 Apr 22 17:24 ..
+-rw-rw-r--  1 git git   104 Apr 10 19:55 1
+-rw-rw-r--  1 git git    89 Apr 10 19:55 1.txt
+-rw-rw-r--  1 git git    34 Apr 10 19:55 2
+-rw-rw-r--  1 git git     0 Apr 10 19:55 2.txt
+-rw-rw-r--  1 git git  4217 Apr 10 19:55 apue.h
+-rw-rw-r--  1 git git     0 Apr 10 19:55 batman
+-rw-rw-r--  1 git git     0 Apr 10 19:55 batman2
+-rw-rw----  1 git git  1165 Apr 22 18:16 dir
+-rw-rw-r--  1 git git  1929 Apr 10 19:55 error.c
+-rw-rw-r--  1 git git    38 Apr 10 19:55 files.txt
+drwxrwxr-x  8 git git  4096 Apr 10 19:55 .git
+-rw-rw-r--  1 git git  1562 Apr 10 19:55 info.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 lsout.txt
+-rw-rw-r--  1 git git  1857 Apr 10 19:55 makeargv.c
+-rw-rw-r--  1 git git    82 Apr 10 19:55 Makefile
+-rwxrwxr-x  1 git git 26643 Apr 10 19:55 MyOwnShell
+-rw-rw-r--  1 git git     0 Apr 22 18:26 output.txt
+-rw-rw-r--  1 git git 14961 Apr 10 19:55 plush.c
+-rw-rw-r--  1 git git   668 Apr 10 19:55 README.md
+-rw-rw-r--  1 git git     0 Apr 10 19:55 robin
+-rw-rw-r--  1 git git    48 Apr 10 19:55 temp
+-rw-rw-r--  1 git git     2 Apr 10 19:55 temp.save
+-rw-rw-r--  1 git git     2 Apr 10 19:55 temp.save.1
+>>> ls -la | grep *.txt
+>>> ls -la | grep .txt
+-rw-rw-r--  1 git git    89 Apr 10 19:55 1.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 2.txt
+-rw-rw-r--  1 git git    38 Apr 10 19:55 files.txt
+-rw-rw-r--  1 git git  1562 Apr 10 19:55 info.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 lsout.txt
+-rw-rw-r--  1 git git     0 Apr 22 18:26 output.txt
+>>> ls -a la | grep .txt > f dir
+>>> cat dir
+-rw-rw-r--  1 git git    89 Apr 10 19:55 1.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 2.txt
+-rw-rw-r--  1 git git    38 Apr 10 19:55 files.txt
+-rw-rw-r--  1 git git  1562 Apr 10 19:55 info.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 lsout.txt
+-rw-rw-r--  1 git git     0 Apr 22 18:26 output.txt
+>>> cat < dir
+cat: <: No such file or directory
+-rw-rw-r--  1 git git    89 Apr 10 19:55 1.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 2.txt
+-rw-rw-r--  1 git git    38 Apr 10 19:55 files.txt
+-rw-rw-r--  1 git git  1562 Apr 10 19:55 info.txt
+-rw-rw-r--  1 git git     0 Apr 10 19:55 lsout.txt
+-rw-rw-r--  1 git git     0 Apr 22 18:26 output.txt
+>>> cat < dir | cat | cat | cat | cat | less
+cat: <: No such file or directory
+[?1049h[?1h=-rw-rw-r--  1 git git    89 Apr 10 19:55 1.txt[m
+-rw-rw-r--  1 git git     0 Apr 10 19:55 2.txt[m
+-rw-rw-r--  1 git git    38 Apr 10 19:55 files.txt[m
+-rw-rw-r--  1 git git  1562 Apr 10 19:55 info.txt[m
+-rw-rw-r--  1 git git     0 Apr 10 19:55 lsout.txt[m
+-rw-rw-r--  1 git git     0 Apr 22 18:26 output.txt[m
+[7m(END)[27m[K[K[?1l>[?1049l>>> sleep 10 &
+>>> ps
+  PID TTY          TIME CMD
+42558 pts/4    00:00:00 bash
+42561 pts/4    00:00:00 MyOwnShell
+42577 pts/4    00:00:00 sleep
+42578 pts/4    00:00:00 ps
+>>> kill 42577
+>>> ps
+  PID TTY          TIME CMD
+42558 pts/4    00:00:00 bash
+42561 pts/4    00:00:00 MyOwnShell
+42579 pts/4    00:00:00 ps
+>>> sleep 10 &
+>>> ps
+  PID TTY          TIME CMD
+42558 pts/4    00:00:00 bash
+42561 pts/4    00:00:00 MyOwnShell
+42580 pts/4    00:00:00 sleep
+42581 pts/4    00:00:00 ps
+>>> kill -9 42580
+>>> ps
+  PID TTY          TIME CMD
+42558 pts/4    00:00:00 bash
+42561 pts/4    00:00:00 MyOwnShell
+42582 pts/4    00:00:00 ps
+>>> c pwd
+/home/git/clones/2240/a3/aron.r.lawrence
+>>> cd ..
+>>> pwd
+/home/git/clones/2240/a3
+>>> cd
+plush: expected argument to "cd"
+>>> cd ~
+plush: not a directory
+>>> exit
+git@jazz:~/clones/2240/a3/aron.r.lawrence$ exit
+exit
+
+Script done on Wed 22 Apr 2015 06:28:42 PM EDT

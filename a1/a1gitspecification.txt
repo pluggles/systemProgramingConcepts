@@ -1,0 +1,10 @@
+
+This specification is in 2240/a1 on our git server (theoretically). 
+
+Part 2 and Part 1 are separate programs. 
+You must have a makefile to create both of them. 
+The executables will be named A1Part1 and A1Part2.
+When A1Part2 is executed input will be 3 letter codes
+ using read() from standard input. 
+The program will finish when '0''0''0' is provided from user. When the program executes the output should be at least 'civil'. For example, inform the user of the above protocol. 
+If the country code does not exist inform the user and prompt "May I have another, sir ?"

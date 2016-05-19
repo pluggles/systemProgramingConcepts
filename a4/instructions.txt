@@ -1,0 +1,5 @@
+this program works by taking a directory name from the command line
+
+so run it like so: ./sorting data
+
+it should work as long as you use correct file paths

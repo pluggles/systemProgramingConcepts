@@ -1,0 +1,43 @@
+A level work, buddy. Not much to say about it, only possible improvments could be using strtok_r() instead of Trenary's function or not storing country codes in the directory.bin file. Keep it up!
+
+
+GRADE: 90 / 100
+
+TESTER OUTPUT ----------
+
+Enter a country code to see its information.
+Enter a country code in all caps, or 000 to exit
+User Input:    
+
+
+Printing returned struct
+ABW, Aruba, 103000, 78.400002
+May I have another, sir?
+USER INPUT:  
+
+Printing returned struct
+AFG, Afghanistan, 22720000, 45.900002
+May I have another, sir?
+USER INPUT:  
+
+Printing returned struct
+BRA, Brazil, 170115000, 62.900002
+May I have another, sir?
+USER INPUT:  
+
+Printing returned struct
+IOT, British Indian Ocean Territory, 0, 0.000000
+May I have another, sir?
+USER INPUT:  
+
+Printing returned struct
+ZMB, Zambia, 9169000, 37.200001
+May I have another, sir?
+USER INPUT:  
+
+Printing returned struct
+ZWE, Zimbabwe, 11669000, 37.799999
+May I have another, sir?
+USER INPUT:  
+Country Not Found. May I have another, sir?
+USER INPUT:  

@@ -1,0 +1,722 @@
+Script started on Tue 03 Feb 2015 01:09:42 PM EST
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ls
+A1.c       AllCountries.dat  BuffGames.c  Makefile
+A1part2.c  apue.h            error.c      typescript
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ cat Makefile
+CC = gcc
+CFLAGS = -g
+
+
+default: A1Part1 part2
+
+A1Part1: A1.o error.o
+	$(CC) $(CFLAGS) -o A1Part1 A1.o error.o
+
+A1.o: A1.c apue.h
+	$(CC) $(CFLAGS) -c A1.c
+
+error.o: error.c apue.h
+	$(CC) $(CFLAGS) -c error.c
+
+part2: A1Part2
+
+A1Part2: A1part2.o error.o
+	$(CC) $(CFLAGS) -o A1Part2 A1part2.o error.o
+
+A1part2.o: A1part2.c apue.h
+	$(CC) $(CFLAGS) -c A1part2.c
+
+error.o: error.c apue.h
+	$(CC) $(CFLAGS) -c error.c
+
+clean:
+	$(RM) A1Part1 A1Part2 *.o
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ca[K[Kls
+A1.c       AllCountries.dat  BuffGames.c  Makefile
+A1part2.c  apue.h            error.c      typescript
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ cat A1.c
+/************************************************************
+* Aron Lawrence CS2240
+* This is part one of A1,
+* this program readin in the data file, creates a sorted
+* struct of the wanted information, and a matching index array
+* then it writes out to two binary files
+*
+*************************************************************/
+
+
+
+#include "apue.h" // Includes most standard libraries 
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>	
+
+#define BUFFSIZE 512
+#define FALSE 0
+#define OFFSET 
+
+
+
+
+
+/*
+     Define structs
+*/
+typedef struct
+{
+	char   code[4]; //made this size four to help with strncpy and strncmp
+	char*   name;
+	int     pop;
+	float   life_e;
+}country;
+
+typedef struct{
+	char 	code[4];
+	int 	offset;
+}countryindex;
+
+//*************Prototypes************************************
+
+char *GimmeALine( int FileDes);
+country* splitALine(char* record);
+void printStruct(country** countryStruct, int numCountries);
+void printOneRecord(country** countryStruct, int indexLoc);
+void cmpObject(country** countries, int numCountries);
+int BinarySearch(country** countries, int numCountries, char* key);  //used for testing
+void UserInput(country** countries, int totalcountries);  //used for testing
+void writeRecordstoFile(country** countries, int countrySize);
+void makeIndexArray(country** countries, int countrySize);
+void writeIndextoFile(countryindex** countryIndex, int countrySize);
+
+//***************globals****************************************
+//i dont know if i eneded up neededing these to be globals
+int offset = 0;  //global
+countryindex** countryIndex;
+
+/************main***********************************************/
+int main(int argc, char *argv[])
+{
+	int fd, n, i, LineCount=0, AllotedCountries=50; // file descriptor, count, index, i may have used all these at one point...
+	
+	//char *Tok;
+	char* LinePtr;
+	
+	country** countries = malloc(50*sizeof(country*)); // memory for you array
+	country tempCountry; //static struct to be used later
+	fd = open("AllCountries.dat", O_RDONLY);
+	if(fd < 0) //males sure your data fil is here
+	{
+		err_sys("failed open!");
+	} else{
+		printf("\nFile AllCountries.dat opened\n");
+	}
+
+	while((LinePtr = GimmeALine(fd)) !=NULL){ //if there are lines left add them to your array
+
+
+		if(LineCount >= AllotedCountries){ //if u run out of space give it more
+			AllotedCountries += 50;
+			countries = realloc(countries, AllotedCountries*sizeof(country*)); //realloc reallocates memory..go figure
+		}
+
+		
+		countries[LineCount] = splitALine(LinePtr); //takes line, splits it, and adds the temp struct to the end of the countries array
+
+        
+        LineCount++;
+        if(LineCount >= 1){
+        cmpObject(countries, LineCount); //sorts on the fly, once there are at least 2 records
+    	}
+	} 
+
+
+		printf("Array of records made and sorted\n"); //At one point i deemed this new line neccassary
+		//print struct used for testing
+		//printStruct(countries, LineCount); //prints all the records
+
+
+		writeRecordstoFile(countries, LineCount);
+		printf("Records written to binary file\n"); //writes all the records to a binary file (I hope)
+		
+		//user input not needed for this part, used for testing though
+		//UserInput(countries, LineCount);  //enters user input loop
+
+
+		makeIndexArray(countries, LineCount);
+		printf("Index array made and sorted\n");
+
+		writeIndextoFile(countryIndex, LineCount);
+		printf("Indexarray written to file\n");
+
+
+		//free your memory
+		for(i=0; i < LineCount; i++){
+			free(countries[i]->name);
+			free(countries[i]);
+
+			free(countryIndex[i]);
+		}
+
+		free(countryIndex);
+	   free(countries); //since we malloc, we have to free
+
+	   printf("memory has been freed, goodbye.\n\n");
+	   exit(0);
+}
+//this is 100 percent Trenarys GimmeALine method
+//
+//**********************************************
+//**********************************************
+/*
+Sent a file to read, returns a a single record
+*/
+char *GimmeALine( int FD)  // GimmeALine is sent open descriptor
+// and returns a pointer to a newline terminated
+// substring of filled buffer. All reads are done
+// within GimmeALine, including the first.
+// GimmeAline assumes the last character in file is '\n'
+{
+    static char Buffer[BUFFSIZE + 1];
+    static int MyEof = FALSE;
+    static int LineFound;
+    static int ReadCount = 0; // initialize to trigger first read
+    static int BufferNdx = BUFFSIZE + 1;
+    static int TokenNdx;
+    static char *ReturnPointer;
+    off_t offset; // for lseek() with buffer fragment
+
+    if (BufferNdx >= ReadCount) // No data ?
+    {
+        ReadCount = read(FD, Buffer, BUFFSIZE);
+        BufferNdx = 0;
+        MyEof = (ReadCount == 0);
+    }
+    if (ReadCount < 0) err_sys("Read Less than 0\n");
+    //       Here Buffer has data -- or Not
+
+    if (! MyEof) // Now we have some data in Buffer
+    {
+        // So look for lines
+        TokenNdx = BufferNdx; // First line character
+        LineFound = FALSE;
+        do // Find a Line
+        {
+            while ((BufferNdx < ReadCount)
+                    && (Buffer[BufferNdx] != '\n')) BufferNdx++;
+            // Move Ptr Forward To Eoln or BufferEnd ?
+            LineFound = (BufferNdx < ReadCount);
+
+            if (! LineFound) // refill buffer
+            {
+                offset = (off_t)(TokenNdx - BufferNdx);
+                lseek(FD, offset, SEEK_CUR);
+                ReadCount = read(FD, Buffer, BUFFSIZE);
+                BufferNdx = 0; TokenNdx = 0; // reset
+                MyEof = (ReadCount == 0);
+                if (MyEof) break; // from FindALine
+            }
+        }
+        while (! LineFound);   // find line in filled buffer
+    }
+    // Here EOF or eoln
+    if (MyEof) ReturnPointer = NULL;
+    else
+    {
+        ReturnPointer = &Buffer[TokenNdx];
+        Buffer[BufferNdx] = (char) 0; // make "string"
+        BufferNdx++; // Get Ready For Next Token
+    }
+
+    return ReturnPointer;
+}
+/*
+gets a record string and splits it
+tokens of inters are:
+1: code
+2: name
+7: population
+8: life expectancy
+
+passed in a record returns a country
+*/
+
+country* splitALine(char* record)
+{
+	char*   token;
+	char* 	ptToken;
+	
+	int     tokenNum = 1;
+	country* returnPointer = malloc(sizeof(country));  //creates the temp country struct
+	token = strtok_r(record, ",", &ptToken);
+ 	
+	//printf("in SplitALine()\n");
+ 
+	while(strlen(token)!=0 && tokenNum < 10) //cycle through important tokens
+	{
+		token = strtok_r(NULL, ",", &ptToken);
+		switch(tokenNum){ //figures out the important tokens and places them in the struct
+			case 1: 
+				strncpy(returnPointer->code, token, sizeof(returnPointer->code) + 1);
+				break;
+			case 2: 
+				returnPointer->name=malloc(strlen(token)+1);
+				strncpy(returnPointer->name, token, strlen(token) + 1);
+				break;
+			case 7:
+				returnPointer->pop = atoi(token);
+				break;
+			case 8:
+				returnPointer->life_e = atof(token);
+				break;
+		}
+		
+		tokenNum++;
+	}
+	//returnPointer = &returnCountry;
+ 
+	return returnPointer;
+}
+/*
+this will print the whole struct to the terminal
+
+passed in the country array and the size of the array
+used for testing 
+*/
+void printStruct(country** countryStruct, int numCountries)
+{
+	int i;
+	for(i = 0; i < numCountries; i++)
+	{
+		printf("%c%c%c, %s, %i, %f \n",countryStruct[i]->code[0], countryStruct[i]->code[1], countryStruct[i]->code[2],
+			countryStruct[i]->name, countryStruct[i]->pop,countryStruct[i]->life_e);
+	}
+}
+
+
+//this prints one reocrd, go figure also used for testing
+void printOneRecord(country** countryStruct, int indexLoc)
+{
+	int i = indexLoc;;
+	
+		printf("%c%c%c, %s, %i, %f \n",countryStruct[i]->code[0], countryStruct[i]->code[1], countryStruct[i]->code[2],
+			countryStruct[i]->name, countryStruct[i]->pop,countryStruct[i]->life_e);
+	
+}
+/*
+bit misnamed method
+this compares and does the swap, so i guess it should really be named
+sort() or something like that
+
+sorts alphebetically by comparing the code
+gets called after each new record gets added
+
+gets passed the country array and the size
+*/
+void cmpObject(country** countries, int numCountries){
+int i, j;
+int count = numCountries;
+country *temp; 
+
+
+for(i=0; i < count; i++){
+	for(j = i+1; j < count; j++){
+		if (strcmp(countries[i]->code, countries[j]->code) > 0) {
+			//basic swap seems to work well
+			temp = countries[i];
+			countries[i] = countries[j]; //move j to i
+			countries[j] = temp;
+
+			}
+		}
+	}
+
+}
+/*
+searces the sorted array for the country code, eventuall will search directory
+but for now just searches actual array of records
+
+gets passed the country array, the size of the array the the country code as a string
+returns an int that is the index of the countries place in the array
+or -1 if the code was not found
+*/
+int BinarySearch(country** countries, int numCountries, char* key) {
+	int indexLocation = -1;
+	int count = numCountries-1;
+	int min = 0, max = count, mid;
+	//printf("the key is %c%c%c\n", key[0], key[1],key[2]); //checking to see if the right key got passes
+	
+	//basic BinarySearch but checks the str as opposed to an int
+	while(min <= max){
+		mid = ( min + max)/2;
+		if(strncmp(countries[mid]->code, key, 3) < 0){
+			min = mid + 1;
+		}
+		else if(strncmp(countries[mid]->code, key, 3) == 0){
+			return mid;  //i know we shouldnt return twice form a method but this made more sense then:
+			// min = max+1;
+			
+		}
+		else if(strncmp(countries[mid]->code, key, 3) > 0){
+			max = mid - 1;
+		}
+	}
+	//printf("index location is %d\n", indexLocation);
+	return indexLocation; //index location gets returned and eventually snet to readOneRecord
+}
+/*
+Infinite loop asking for user input, allows for user to enter country code
+and returns the record, if the code is not found -1 is returned
+to quit the loop and exit the program enter -1
+
+passes in Country array, and amount of records
+in retrospect i should probably have made my record count a global varible
+but i dont feel like changing that now
+
+*/
+void UserInput(country** countries, int totalcountries){
+	char *wantedKey = malloc(3 * sizeof(char*));    //allocates space for the users input
+	int returnedkey = -1;
+	char inbuf[1000];
+	int n;
+
+			printf("Enter a country code to see its information (three letters all caps, enter q to quit)\n");
+			//printf("\n");
+			printf("User Input:    \n");
+			//fsync(1);
+			read(0,inbuf,sizeof(inbuf));
+			printf("\n");
+			while(inbuf[0] != 'q' || inbuf[1]!= '\n'){
+				if(inbuf[3] == '\n'){
+				returnedkey = BinarySearch(countries, totalcountries, inbuf);
+			}
+					if (returnedkey != -1){  //if the record was found prints the record
+							printf("\n");	
+							printf("Printing returned struct\n");
+							printOneRecord(countries, returnedkey);
+			} else{
+				printf("Country Not Found\n");
+			}	
+				returnedkey = -1;
+                printf("USER INPUT:  \n"); 
+      
+                read(0,inbuf,sizeof(inbuf));    
+            }
+
+            free(wantedKey);
+
+}
+/*
+Should write the country array to a binary file,
+
+
+Passes in the country array, and the country size
+*/
+void writeRecordstoFile(country** countries, int countrySize){
+	int outFile;
+	//outFile = open("records.bin", O_TRUNC | O_WRONLY, S_IWUSR);
+	outFile = open("records.bin", O_WRONLY | O_CREAT | O_TRUNC,  S_IRUSR | S_IRGRP | S_IROTH);
+	int i;
+	int length;
+	for(i=0; i<countrySize; i++){
+		length = strlen(countries[i]->name);
+		write(outFile, countries[i]->code, 4);
+		write(outFile, &length, sizeof(int));
+		write(outFile, countries[i]->name, strlen(countries[i]->name));
+		write(outFile, &countries[i]->pop, sizeof(int));
+		write(outFile, &countries[i]->life_e, sizeof(float));
+
+	}
+}
+//*****Makes the index array, for direct addressing*********
+void makeIndexArray(country** countries, int countrySize){
+	int i=0;
+
+
+	countryIndex = malloc(countrySize*sizeof(countryindex*));
+	int currentoffset = 0;
+
+
+	//printf("offset is %d\n", currentoffset);
+	
+
+	countryIndex[0] = malloc(sizeof(countryIndex));
+		
+
+		countryIndex[0]->offset = 0;
+		//printf("Offset is: %d", currentoffset);
+		strncpy(countryIndex[0]->code, countries[0]->code, 4);
+		currentoffset = (4*sizeof(char)+
+			sizeof(int)+strlen(countries[0]->name)+sizeof(int)+sizeof(float));
+
+
+	for(i=1; i <countrySize; i++){
+		countryIndex[i] = malloc(sizeof(countryIndex));
+	//	printf("count %d\n", i);
+
+		countryIndex[i]->offset = currentoffset;
+		currentoffset += (4*sizeof(char)+
+			sizeof(int)+strlen(countries[i]->name)+sizeof(int)+sizeof(float));
+		//printf("count %d\n", i);
+	//	printf("Offset is: %d", currentoffset);
+		strncpy(countryIndex[i]->code, countries[i]->code, 4);
+//str
+
+		//printf("%c%c%c, %d \n", countryIndex[i]->code[0], countryIndex[i]->code[1], countryIndex[i]->code[2], countryIndex[i]->offset);
+		
+	}
+
+
+	
+}
+//****writes the inendex array to a bin file
+void writeIndextoFile(countryindex** countryIndex, int countrySize){
+	int outIndexFile;
+	//outIndexFile = open("index.bin", O_TRUNC | O_WRONLY, S_IWUSR);
+	outIndexFile = open("index.bin", O_WRONLY | O_CREAT | O_TRUNC,  S_IRUSR | S_IRGRP | S_IROTH);
+	int i = 0;
+	for(i=0; i<countrySize; i++){
+		write(outIndexFile, countryIndex[i]->code, 4);
+		write(outIndexFile, &countryIndex[i]->offset, sizeof(int));
+	}
+}]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ cat A1part2.c
+/**
+* Aron Lawrence 2240
+* A1 Part 2
+* this program reads in the index array from a bianry file
+* allows the user to search for a record by country
+* then if found open the records bin file and prints the wanted record
+
+**/
+
+#include "apue.h" // Includes most standard libraries 
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>	
+
+#define NUMCOUNTRIES 239
+
+typedef struct{
+	char 	code[4];
+	int 	offset;
+}countryindex;
+
+countryindex** countryIndex;
+
+void *GimmeANode(int filDes);
+int BinarySearch(int countryLines, char* key);
+void UserInput(int totalcountries);
+void printStruct(int LineCount);
+void printOneRecord(int returnedKey);
+
+
+int main(int argc, char *argv[])
+{
+	int i;
+	countryIndex = malloc(239*sizeof(countryindex*));
+	int fd  = open("index.bin", O_RDONLY);
+	if(fd < 0){
+		err_sys("failed open!");
+	}
+	GimmeANode(fd);
+	for(i=0; i < NUMCOUNTRIES; i++){
+		free(countryIndex[i]);
+	}
+	free(countryIndex);
+	exit(0);
+}
+
+//****Reads in the index file and creates the index array**********
+void *GimmeANode(int filDes){
+		static char charBuf[4];
+		static int offsetbuff;
+		static int MyEOf = -1;
+		static char *String;
+		int i,j;
+		static int readstuff = 0;
+		for( i=0; i<239; i++){
+			countryIndex[i]=malloc(sizeof(countryindex));
+	
+		readstuff =read(filDes, charBuf, 4);
+	
+		readstuff=read(filDes, &offsetbuff, sizeof(int));
+
+
+		String = charBuf;
+
+		strncpy(countryIndex[i]->code, String, strlen(String));
+		countryIndex[i]->offset = offsetbuff;
+		
+
+	}
+
+	UserInput(NUMCOUNTRIES);
+
+}
+//*****Basic binary search based off country code********************
+int BinarySearch(int countryLines, char* key) {
+	int offSet = -1;
+	int count = countryLines-1;
+	int min = 0, max = count, mid;
+
+	//printf("the key is %c%c%c\n", key[0], key[1],key[2]); //checking to see if the right key got passes
+	
+	//basic BinarySearch but checks the str as opposed to an int
+	while(min <= max){
+		mid = ( min + max)/2;
+		if(strncmp(countryIndex[mid]->code, key, 3) < 0){
+			min = mid + 1;
+		}
+		else if(strncmp(countryIndex[mid]->code, key, 3) == 0){
+			//printf("here here here");
+			offSet = countryIndex[mid]->offset;  //i know we shouldnt return twice form a method but this made more sense then:
+			 min = max+10;
+			//offSet = 10;
+			
+		}
+		else if(strncmp(countryIndex[mid]->code, key, 3) > 0){
+			max = mid - 1;
+		}
+	}
+	//printf("index location is %d\n", indexLocation);
+	return offSet; //index location gets returned and eventually snet to readOneRecord
+}
+//******gets user input and loops********
+void UserInput(int totalcountries){
+	char *wantedKey = malloc(3 * sizeof(char*));    //allocates space for the users input
+	int returnedkey = -1;
+	char inbuf[1000];
+	int n;
+
+			printf("Enter a country code to see its information.\n");
+			printf("Enter a country code in all caps, or 000 to exit\n");
+			//printf("\n");
+			printf("User Input:    \n");
+			//fsync(1);
+			read(0,inbuf,sizeof(inbuf));
+			printf("\n");
+			while((strncmp(inbuf, "000", 3) != 0  )|| inbuf[3]!= '\n'){
+				if(inbuf[3] == '\n'){
+				returnedkey = BinarySearch(totalcountries, inbuf);
+			}
+					if (returnedkey != -1){  //if the record was found prints the record
+							printf("\n");	
+							printf("Printing returned struct\n");
+							printOneRecord(returnedkey);
+							printf("May I have another, sir?\n");
+			} else{
+				printf("Country Not Found. May I have another, sir?\n");
+			}	
+				returnedkey = -1;
+                printf("USER INPUT:  \n"); 
+      
+                read(0,inbuf,sizeof(inbuf));    
+            }
+            free(wantedKey);
+
+}
+//*******print index array for testing************
+void printStruct(int LineCount){
+
+	int i;
+	for(i = 0; i < LineCount; i++)
+	{
+		printf("%c%c%c, %i \n", countryIndex[i]->code[0], countryIndex[i]->code[1], countryIndex[i]->code[2],
+			 countryIndex[i]->offset);
+	}
+
+}
+//****opend the records file and seeks to correct offset, reads ina nd prints wanted info******
+void printOneRecord(int returnedKey){
+	
+int fd  = open("records.bin", O_RDONLY);
+	if(fd < 0){
+		err_sys("failed open!");
+	}
+	int offset = returnedKey;
+	 char charBuf[4];
+	 int lengthBuf;
+	 char* nameBuffer = malloc(sizeof(lengthBuf)*sizeof(char));
+	 int popBuf;
+	 float lifeBuf;
+
+
+	lseek(fd, offset, 0);
+
+	int readRecord = read(fd, charBuf, 4);
+	readRecord = read(fd, &lengthBuf, sizeof(int));
+	readRecord = read(fd, nameBuffer, lengthBuf);
+	readRecord = read(fd, &popBuf, sizeof(int));
+	readRecord = read(fd, &lifeBuf, sizeof(float));
+
+	//char *CodeS = cha
+
+	printf("%c%c%c, %s, %i, %f\n", charBuf[0], charBuf[1], charBuf[2], nameBuffer, popBuf, lifeBuf);
+	free(nameBuffer);
+}]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ls
+A1.c       AllCountries.dat  BuffGames.c  Makefile
+A1part2.c  apue.h            error.c      typescript
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ make
+Makefile:25: warning: overriding commands for target `error.o'
+Makefile:14: warning: ignoring old commands for target `error.o'
+gcc -g -c A1.c
+gcc -g -c error.c
+gcc -g -o A1Part1 A1.o error.o
+gcc -g -c A1part2.c
+gcc -g -o A1Part2 A1part2.o error.o
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ls
+A1.c  [0m[01;32mA1Part1[0m  A1part2.c  AllCountries.dat  BuffGames.c  error.o   typescript
+A1.o  [01;32mA1Part2[0m  A1part2.o  apue.h            error.c      Makefile
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ./A1Part2[K1[K[K[K[K[K[K[K[K[K
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ 
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ A1[K[K
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ 
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ./A1p[K[K[K[K[K
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ 
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ 
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ./A1Part1
+
+File AllCountries.dat opened
+Array of records made and sorted
+Records written to binary file
+Index array made and sorted
+Indexarray written to file
+memory has been freed, goodbye.
+
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ls
+A1.c     [0m[01;32mA1Part2[0m    AllCountries.dat  error.c    Makefile
+A1.o     A1part2.c  apue.h            error.o    records.bin
+[01;32mA1Part1[0m  A1part2.o  BuffGames.c       index.bin  typescript
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ ./A1Part2
+Enter a country code to see its information.
+Enter a country code in all caps, or 000 to exit
+User Input:    
+USA
+
+
+Printing returned struct
+USA, United States, 278357000, 77.099998
+May I have another, sir?
+USER INPUT:  
+ZMB
+
+Printing returned struct
+ZMB, Zambia, 9169000, 37.200001
+May I have another, sir?
+USER INPUT:  
+aaa
+Country Not Found. May I have another, sir?
+USER INPUT:  
+909
+Country Not Found. May I have another, sir?
+USER INPUT:  
+0000
+Country Not Found. May I have another, sir?
+USER INPUT:  
+UUSA
+Country Not Found. May I have another, sir?
+USER INPUT:  
+000
+]0;pluggles@plugglesComp: ~/Documents/2240/git/a1/Assign1pluggles@plugglesComp:~/Documents/2240/git/a1/Assign1$ exit
+exit
+
+Script done on Tue 03 Feb 2015 01:11:29 PM EST

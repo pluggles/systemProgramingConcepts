@@ -1,0 +1,13 @@
+To compile both part1 and part2 you can just run $make
+
+to compile part1: $make A1part1
+
+to create part2: $make part2
+
+to remove parts one and two: $make clean
+
+I dont see the need for a seperate make file for part 2 only
+
+user input is done  with read
+
+000 will exit the program

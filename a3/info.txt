@@ -1,0 +1,27 @@
+I give you a) makeargv() and b) too many examples and you write a shell. This will be found in a3 repo by ... Sunday night. But in the meantime we have plenty of amusement -- you would be well served to read Ch7 (environment of process) and research the following system calls
+dup() , dup2() ... Chapter 3 discussion as introduction to 'atomic' operations. 
+exec(), fork(), wait() .. Chapter 8
+pipe() Chapter ... 15
+signals() .. Chapter 10
+
+Your shell will implement the usual functionality of > , | , & and in addition the built-in commands cd and kill. Your command line processing is taken care of with makeargv() which you must understand, if only because then you will see that a char *** declaration has a rationale. 
+
+
+You have seen an example of a demonstration using the makeargv() code you have been provided, in concert with dup2(),  execvp(), fork() and wait(). 
+
+This code gets you on a good start towards writing your own shell which must support:
+    arbitrary number of pipes ( syntax using | )
+    redirection <, and >
+    background ( & at end of command line)
+    and 2 built-in commands cd and kill.
+The remaining system call that bears consideration is pipe(), discussed in Ch 15. 
+
+We should look at the code which is attached -- have  you marveled at makeargv() ?  
+
+
+Signals -- how we will implement the built-in shell command "kill", which takes a process id. I believe we have a kill system call ? 
+
+
+ b) How to implement 'kill' 
+               Why must this be a built-in 
+               is it just a matter of kill() ... no signal ? 

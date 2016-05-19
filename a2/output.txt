@@ -1,0 +1,42 @@
+TESTER-1:
+Memory was allocated, used, and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 28
+[mcontest]: #SBRK: 1
+[mcontest]: AVG: 28.000000
+[mcontest]: TIME: 0.001248
+TESTER-2:
+Memory was allocated, used, and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 1800049
+[mcontest]: #SBRK: 50002
+[mcontest]: AVG: 1450034.500195
+[mcontest]: TIME: 5.733481
+TESTER-3:
+Memory was allocated and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 10240049
+[mcontest]: #SBRK: 2
+[mcontest]: AVG: 10214512.780549
+[mcontest]: TIME: 0.000626
+TESTER-4:
+Memory was allocated, used, and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 195777
+[mcontest]: #SBRK: 8
+[mcontest]: AVG: 194883.020202
+[mcontest]: TIME: 0.000710
+TESTER-5:
+Memory was allocated and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 866696944
+[mcontest]: #SBRK: 10063
+[mcontest]: AVG: 441123612.891987
+[mcontest]: TIME: 64.008975
+TESTER-9:
+Memory was allocated and freed!
+[mcontest]: STATUS: OK
+[mcontest]: MAX: 449352840
+[mcontest]: #SBRK: 61505
+[mcontest]: AVG: 227579154.315469
+[mcontest]: TIME: 27.424730
